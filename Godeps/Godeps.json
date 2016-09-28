@@ -1,0 +1,31 @@
+{
+	"ImportPath": "github.com/aandryashin/urls",
+	"GoVersion": "go1.7",
+	"GodepVersion": "v74",
+	"Deps": [
+		{
+			"ImportPath": "github.com/aandryashin/matchers",
+			"Rev": "5eb67beb188b5076812683a96c13bef79d970fd8"
+		},
+		{
+			"ImportPath": "github.com/facebookgo/clock",
+			"Rev": "600d898af40aa09a7a93ecb9265d87b0504b6f03"
+		},
+		{
+			"ImportPath": "github.com/facebookgo/grace/gracehttp",
+			"Rev": "5729e484473f52048578af1b80d0008c7024089b"
+		},
+		{
+			"ImportPath": "github.com/facebookgo/grace/gracenet",
+			"Rev": "5729e484473f52048578af1b80d0008c7024089b"
+		},
+		{
+			"ImportPath": "github.com/facebookgo/httpdown",
+			"Rev": "a3b1354551a26449fbe05f5d855937f6e7acbd71"
+		},
+		{
+			"ImportPath": "github.com/facebookgo/stats",
+			"Rev": "1b76add642e42c6ffba7211ad7b3939ce654526e"
+		}
+	]
+}
