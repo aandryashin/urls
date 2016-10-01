@@ -36,6 +36,7 @@ func init() {
 }
 
 func main() {
+	store = NewMapStore()
 	servers := []*http.Server{}
 	if httpsAddr == "" {
 		servers = append(servers, &http.Server{

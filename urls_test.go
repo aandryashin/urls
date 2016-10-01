@@ -16,6 +16,7 @@ var (
 )
 
 func init() {
+	store = NewMapStore()
 	srv = httptest.NewServer(handler())
 }
 
@@ -58,7 +59,7 @@ func TestBadRequest(t *testing.T) {
 func TestBadKey(t *testing.T) {
 	resp, err := http.Get(uri("/ "))
 	AssertThat(t, err, Is{nil})
-	AssertThat(t, resp, Code{http.StatusBadRequest})
+	AssertThat(t, resp, Code{http.StatusNotFound})
 }
 
 func TestMissingKey(t *testing.T) {
@@ -68,17 +69,13 @@ func TestMissingKey(t *testing.T) {
 }
 
 func TestRedirect(t *testing.T) {
-	serial := increment()
-	mlock.Lock()
-	urls[serial] = "url"
-	mlock.Unlock()
-
+	k := store.Put("url")
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		}}
 
-	resp, err := client.Get(uri("/" + encode(serial)))
+	resp, err := client.Get(uri("/" + k))
 	AssertThat(t, err, Is{nil})
 	AssertThat(t, resp, Code{http.StatusMovedPermanently})
 
@@ -93,12 +90,8 @@ func TestNewKey(t *testing.T) {
 	var o jso
 	AssertThat(t, resp, AllOf{Code{http.StatusOK}, IsJson{&o}})
 
-	k, err := decode(strings.TrimPrefix(o.Url, "/"))
-	AssertThat(t, err, Is{nil})
-
-	mlock.RLock()
-	u, ok := urls[k]
-	mlock.RUnlock()
+	k := strings.TrimPrefix(o.Url, "/")
+	u, ok := store.Get(k)
 
 	AssertThat(t, ok, Is{true})
 	AssertThat(t, u, EqualTo{"http://example.com"})

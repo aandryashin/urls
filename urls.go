@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
-	"sync"
 )
 
 type jso struct {
@@ -14,28 +12,8 @@ type jso struct {
 }
 
 var (
-	mlock  sync.RWMutex
-	urls   map[uint64]string = make(map[uint64]string)
-	lock   sync.Mutex
-	serial uint64
+	store Store
 )
-
-func increment() uint64 {
-	defer func() {
-		lock.Lock()
-		serial++
-		lock.Unlock()
-	}()
-	return serial
-}
-
-func decode(s string) (uint64, error) {
-	return strconv.ParseUint(s, 36, 64)
-}
-
-func encode(i uint64) string {
-	return strconv.FormatUint(i, 36)
-}
 
 func valid(s string) bool {
 	u, err := url.Parse(s)
@@ -58,26 +36,16 @@ func handler() http.Handler {
 				http.Error(w, "Bad Request", http.StatusBadRequest)
 				return
 			}
-			key := increment()
-			mlock.Lock()
-			urls[key] = o.Url
-			mlock.Unlock()
-			json.NewEncoder(w).Encode(jso{encode(key)})
+			k := store.Put(o.Url)
+			json.NewEncoder(w).Encode(jso{k})
 		case http.MethodGet:
-			uri := strings.TrimPrefix(r.URL.RequestURI(), "/")
-			key, err := decode(uri)
-			if err != nil {
-				http.Error(w, "Bad Request", http.StatusBadRequest)
-				return
-			}
-			mlock.RLock()
-			ru, ok := urls[key]
-			mlock.RUnlock()
+			k := strings.TrimPrefix(r.URL.RequestURI(), "/")
+			v, ok := store.Get(k)
 			if !ok {
 				http.Error(w, "Not Found", http.StatusNotFound)
 				return
 			}
-			http.Redirect(w, r, ru, http.StatusMovedPermanently)
+			http.Redirect(w, r, v, http.StatusMovedPermanently)
 		default:
 			http.Error(w, "Bad Request", http.StatusBadRequest)
 		}
