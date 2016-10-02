@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Url shortener</title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<body>
+<div class='navbar navbar-default navbar-static-top'>
+    <div class='container'>
+        <div class="row">
+            <a href='/' class='navbar-brand'>Url Shortener</a>
+        </div>
+    </div>
+</div>
+<div class='container'>
+    <div class="row well">
+        <div class="row">
+            <div class="form-group">
+                <form id="form">
+                    <div class="input-group">
+                        <input id="long-url" name="long-url" class="form-control" placeholder="Enter url to short...">
+                        <span class="input-group-addon"><button type="submit">Submit</button></span>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="row" id="response">
+    </div>
+</div>
+
+<script>
+    (function($){
+        function processForm( e ){
+            $.ajax({
+                url: '/',
+                dataType: 'json',
+                type: 'post',
+                contentType: 'application/json',
+                data: JSON.stringify( { "url": $('#long-url').val() } ),
+                processData: false,
+                success: function( data, textStatus, jQxhr ){
+                    $('#response').html( '<a href="/' + data.url + '">New link</a>');
+                },
+                error: function( jqXhr, textStatus, errorThrown ){
+                    console.log( errorThrown );
+                }
+            });
+            e.preventDefault();
+        }
+        $('#form').submit( processForm );
+    })(jQuery);
+
+
+
+
+</script>
+</body>
+</html>

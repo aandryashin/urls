@@ -15,6 +15,7 @@ import (
 )
 
 var (
+	index     string
 	folder    string
 	endpoints []string
 	httpAddr  string
@@ -35,6 +36,7 @@ func redirect(port string) http.Handler {
 
 func init() {
 	var list string
+	flag.StringVar(&index, "index", "html/index.html", "index to serve on root")
 	flag.StringVar(&folder, "folder", "/", "etcd folder to store keys")
 	flag.StringVar(&list, "endpoints", "http://127.0.0.1:2379", "comma-separated list of etcd endpoints")
 	flag.StringVar(&httpAddr, "http", ":8080", "listen http protocol on")

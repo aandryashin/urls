@@ -64,10 +64,19 @@ func body(s string) *bytes.Reader {
 	return bytes.NewReader([]byte(s))
 }
 
-func TestRootGet(t *testing.T) {
+func TestIndex(t *testing.T) {
 	resp, err := http.Get(uri("/"))
 	AssertThat(t, err, Is{nil})
 	AssertThat(t, resp, Code{http.StatusOK})
+}
+
+func TestBrokenIndex(t *testing.T) {
+	save := index
+	index = "unexistent"
+	resp, err := http.Get(uri("/"))
+	AssertThat(t, err, Is{nil})
+	AssertThat(t, resp, Code{http.StatusInternalServerError})
+	index = save
 }
 
 func TestWrongMethod(t *testing.T) {
