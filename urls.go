@@ -2,8 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -11,18 +13,29 @@ type jso struct {
 	Url string `json:"url"`
 }
 
-var (
-	store Store
-)
-
 func valid(s string) bool {
 	u, err := url.Parse(s)
 	return err == nil && u.IsAbs() && u.Host != ""
 }
 
+func decode(s string) (uint64, error) {
+	return strconv.ParseUint(s, 36, 64)
+}
+
+func encode(i uint64) string {
+	return strconv.FormatUint(i, 36)
+}
+
 func handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			e := recover()
+			if e != nil {
+				log.Println(e)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			}
+		}()
 		if r.URL.RequestURI() == "/" && r.Method == http.MethodGet {
 			// TODO: write html
 			return
@@ -37,9 +50,14 @@ func handler() http.Handler {
 				return
 			}
 			k := store.Put(o.Url)
-			json.NewEncoder(w).Encode(jso{k})
+			json.NewEncoder(w).Encode(jso{encode(k)})
 		case http.MethodGet:
-			k := strings.TrimPrefix(r.URL.RequestURI(), "/")
+			p := strings.TrimPrefix(r.URL.RequestURI(), "/")
+			k, err := decode(p)
+			if err != nil {
+				http.Error(w, "Bad Request", http.StatusBadRequest)
+				return
+			}
 			v, ok := store.Get(k)
 			if !ok {
 				http.Error(w, "Not Found", http.StatusNotFound)

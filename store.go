@@ -1,48 +1,42 @@
 package main
 
 import (
-	"strconv"
-	"sync"
+	"context"
+	"fmt"
+
+	"github.com/coreos/etcd/client"
 )
 
 type Store interface {
-	Put(k string) string
-	Get(v string) (string, bool)
+	Put(v string) uint64
+	Get(k uint64) (string, bool)
 }
 
-type MapStore struct {
-	l sync.RWMutex
-	i uint64
-	m map[uint64]string
+type EtcdStore struct {
+	dir string
+	api client.KeysAPI
 }
 
-func NewMapStore() *MapStore {
-	return &MapStore{m: make(map[uint64]string)}
+func NewEtcdStore(d string, c client.Client) *EtcdStore {
+	return &EtcdStore{d, client.NewKeysAPI(c)}
 }
 
-func (store *MapStore) Get(k string) (string, bool) {
-	store.l.RLock()
-	defer store.l.RUnlock()
-	i, err := decode(k)
+func (store *EtcdStore) Get(k uint64) (string, bool) {
+	p := fmt.Sprintf("%s/%020d", store.dir, k)
+	resp, err := store.api.Get(context.Background(), p, nil)
 	if err != nil {
-		return "", false
+		if client.IsKeyNotFound(err) {
+			return "", false
+		}
+		panic(err)
 	}
-	v, ok := store.m[i]
-	return v, ok
+	return resp.Node.Value, true
 }
 
-func (store *MapStore) Put(v string) string {
-	store.l.Lock()
-	defer store.l.Unlock()
-	store.i++
-	store.m[store.i] = v
-	return encode(store.i)
-}
-
-func decode(s string) (uint64, error) {
-	return strconv.ParseUint(s, 36, 64)
-}
-
-func encode(i uint64) string {
-	return strconv.FormatUint(i, 36)
+func (store *EtcdStore) Put(v string) uint64 {
+	resp, err := store.api.CreateInOrder(context.Background(), store.dir, v, nil)
+	if err != nil {
+		panic(err)
+	}
+	return resp.Index
 }

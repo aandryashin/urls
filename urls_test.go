@@ -2,14 +2,50 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"net/http"
 	"net/http/httptest"
-	"strings"
+	"sync"
 	"testing"
 
 	. "github.com/aandryashin/matchers"
 	. "github.com/aandryashin/matchers/httpresp"
 )
+
+type MapStore struct {
+	l sync.RWMutex
+	i uint64
+	m map[uint64]string
+}
+
+func NewMapStore() *MapStore {
+	return &MapStore{m: make(map[uint64]string)}
+}
+
+func (store *MapStore) Get(k uint64) (string, bool) {
+	store.l.RLock()
+	defer store.l.RUnlock()
+	v, ok := store.m[k]
+	return v, ok
+}
+
+func (store *MapStore) Put(v string) uint64 {
+	store.l.Lock()
+	defer store.l.Unlock()
+	store.i++
+	store.m[store.i] = v
+	return store.i
+}
+
+type BrokenStore struct{}
+
+func (store *BrokenStore) Get(k uint64) (string, bool) {
+	panic(errors.New("store is broken"))
+}
+
+func (store *BrokenStore) Put(v string) uint64 {
+	panic(errors.New("store is broken"))
+}
 
 var (
 	srv *httptest.Server
@@ -59,7 +95,7 @@ func TestBadRequest(t *testing.T) {
 func TestBadKey(t *testing.T) {
 	resp, err := http.Get(uri("/ "))
 	AssertThat(t, err, Is{nil})
-	AssertThat(t, resp, Code{http.StatusNotFound})
+	AssertThat(t, resp, Code{http.StatusBadRequest})
 }
 
 func TestMissingKey(t *testing.T) {
@@ -75,7 +111,7 @@ func TestRedirect(t *testing.T) {
 			return http.ErrUseLastResponse
 		}}
 
-	resp, err := client.Get(uri("/" + k))
+	resp, err := client.Get(uri("/" + encode(k)))
 	AssertThat(t, err, Is{nil})
 	AssertThat(t, resp, Code{http.StatusMovedPermanently})
 
@@ -84,15 +120,16 @@ func TestRedirect(t *testing.T) {
 	AssertThat(t, loc.String(), EqualTo{uri("/url")})
 }
 
-func TestNewKey(t *testing.T) {
+func TestBrokenStoreGet(t *testing.T) {
+	store = &BrokenStore{}
+	resp, err := http.Get(uri("/key"))
+	AssertThat(t, err, Is{nil})
+	AssertThat(t, resp, Code{http.StatusInternalServerError})
+}
+
+func TestBrokenStorePost(t *testing.T) {
+	store = &BrokenStore{}
 	resp, err := http.Post(uri("/"), "", body(`{"url" : "http://example.com"}`))
 	AssertThat(t, err, Is{nil})
-	var o jso
-	AssertThat(t, resp, AllOf{Code{http.StatusOK}, IsJson{&o}})
-
-	k := strings.TrimPrefix(o.Url, "/")
-	u, ok := store.Get(k)
-
-	AssertThat(t, ok, Is{true})
-	AssertThat(t, u, EqualTo{"http://example.com"})
+	AssertThat(t, resp, Code{http.StatusInternalServerError})
 }

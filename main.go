@@ -7,18 +7,24 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strings"
+	"time"
 
+	"github.com/coreos/etcd/client"
 	"github.com/facebookgo/grace/gracehttp"
 )
 
 var (
+	folder    string
+	endpoints []string
 	httpAddr  string
 	httpsAddr string
 	sslCert   string
 	sslKey    string
+	store     Store
 )
 
-func redirectTo(port string) http.Handler {
+func redirect(port string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		hostport := r.Context().Value(http.LocalAddrContextKey).(net.Addr).String()
 		host, _, _ := net.SplitHostPort(hostport)
@@ -28,15 +34,29 @@ func redirectTo(port string) http.Handler {
 }
 
 func init() {
+	var list string
+	flag.StringVar(&folder, "folder", "/", "etcd folder to store keys")
+	flag.StringVar(&list, "endpoints", "http://127.0.0.1:2379", "comma-separated list of etcd endpoints")
 	flag.StringVar(&httpAddr, "http", ":8080", "listen http protocol on")
 	flag.StringVar(&httpsAddr, "https", "", "listen https protocol on (default disabled)")
 	flag.StringVar(&sslCert, "ssl-cert", "cert/localhost.crt", "ssl certificate")
 	flag.StringVar(&sslKey, "ssl-key", "cert/localhost.key", "ssl certificate key")
 	flag.Parse()
+	endpoints = strings.Split(list, ",")
 }
 
 func main() {
-	store = NewMapStore()
+	cfg := client.Config{
+		Endpoints:               endpoints,
+		Transport:               client.DefaultTransport,
+		HeaderTimeoutPerRequest: time.Second,
+	}
+	c, err := client.New(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	store = NewEtcdStore(folder, c)
+
 	servers := []*http.Server{}
 	if httpsAddr == "" {
 		servers = append(servers, &http.Server{
@@ -54,7 +74,7 @@ func main() {
 		}
 		servers = append(servers, &http.Server{
 			Addr:    httpAddr,
-			Handler: redirectTo(httpsPort),
+			Handler: redirect(httpsPort),
 		})
 		servers = append(servers, &http.Server{
 			Addr:      httpsAddr,
