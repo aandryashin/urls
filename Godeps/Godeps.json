@@ -8,6 +8,25 @@
 			"Rev": "5eb67beb188b5076812683a96c13bef79d970fd8"
 		},
 		{
+			"ImportPath": "github.com/aandryashin/matchers/httpresp",
+			"Rev": "5eb67beb188b5076812683a96c13bef79d970fd8"
+		},
+		{
+			"ImportPath": "github.com/coreos/etcd/client",
+			"Comment": "v3.0.0-beta.0-649-gefcf03f",
+			"Rev": "efcf03f0b1b46af5078fb8f9848d4cc92e80cb77"
+		},
+		{
+			"ImportPath": "github.com/coreos/etcd/pkg/pathutil",
+			"Comment": "v3.0.0-beta.0-649-gefcf03f",
+			"Rev": "efcf03f0b1b46af5078fb8f9848d4cc92e80cb77"
+		},
+		{
+			"ImportPath": "github.com/coreos/etcd/pkg/types",
+			"Comment": "v3.0.0-beta.0-649-gefcf03f",
+			"Rev": "efcf03f0b1b46af5078fb8f9848d4cc92e80cb77"
+		},
+		{
 			"ImportPath": "github.com/facebookgo/clock",
 			"Rev": "600d898af40aa09a7a93ecb9265d87b0504b6f03"
 		},
@@ -26,6 +45,14 @@
 		{
 			"ImportPath": "github.com/facebookgo/stats",
 			"Rev": "1b76add642e42c6ffba7211ad7b3939ce654526e"
+		},
+		{
+			"ImportPath": "github.com/ugorji/go/codec",
+			"Rev": "faddd6128c66c4708f45fdc007f575f75e592a3c"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "6c89f9617983ee917132513a791d8b5850fe90c5"
 		}
 	]
 }
