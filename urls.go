@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -33,7 +34,7 @@ func handler() http.Handler {
 			e := recover()
 			if e != nil {
 				log.Println(e)
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				http.Error(w, e.(error).Error(), http.StatusInternalServerError)
 			}
 		}()
 		if r.URL.RequestURI() == "/" && r.Method == http.MethodGet {
@@ -46,7 +47,7 @@ func handler() http.Handler {
 			json.NewDecoder(r.Body).Decode(&o)
 			r.Body.Close()
 			if !valid(o.Url) {
-				http.Error(w, "Bad Request", http.StatusBadRequest)
+				http.Error(w, fmt.Sprintf("Bad url: %s", o.Url), http.StatusBadRequest)
 				return
 			}
 			k := store.Put(o.Url)
@@ -55,12 +56,12 @@ func handler() http.Handler {
 			p := strings.TrimPrefix(r.URL.RequestURI(), "/")
 			k, err := decode(p)
 			if err != nil {
-				http.Error(w, "Bad Request", http.StatusBadRequest)
+				http.Error(w, fmt.Sprintf("Bad key encoding: %s", err), http.StatusBadRequest)
 				return
 			}
 			v, ok := store.Get(k)
 			if !ok {
-				http.Error(w, "Not Found", http.StatusNotFound)
+				http.Error(w, fmt.Sprintf("Url not found: %s", p), http.StatusNotFound)
 				return
 			}
 			http.Redirect(w, r, v, http.StatusMovedPermanently)
