@@ -30,4 +30,4 @@ $ curl http://localhost:8080/4
 <a href="http://www.google.com">Moved Permanently</a>.
 ```
 
-To run with several etcd nodes, you have to provide thew with endpoints option.
+To run with several etcd nodes, you have to provide them with endpoints option.
