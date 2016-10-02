@@ -90,3 +90,8 @@ func TestPutValue(t *testing.T) {
 	k := store.Put("")
 	AssertThat(t, k, EqualTo{uint64(12345)})
 }
+
+func TestNewEtcdStore(t *testing.T) {
+	store := NewEtcdStore("/", nil)
+	AssertThat(t, store.dir, EqualTo{"/"})
+}
