@@ -30,4 +30,18 @@ $ curl http://localhost:8080/4
 <a href="http://www.google.com">Moved Permanently</a>.
 ```
 
+Enable https support:
+
+```
+$ ./urls -http :8080 -https :8443
+2016/10/03 10:07:35 Serving [::]:8080, [::]:8443 with pid 11660 
+```
+
+```
+$ curl -L -k http://localhost:8080 -d'{"url" : "http://www.google.com"}'
+{"url":"8"}
+$ curl -k http://localhost:8080/8
+<a href="https://[::]:8443/8">Temporary Redirect</a>.
+```
+
 To run with several etcd nodes, you have to provide them with endpoints option.

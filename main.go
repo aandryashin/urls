@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/tls"
 	"flag"
-	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -29,8 +28,9 @@ func redirect(port string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		hostport := r.Context().Value(http.LocalAddrContextKey).(net.Addr).String()
 		host, _, _ := net.SplitHostPort(hostport)
-		u := fmt.Sprintf("https://%s:%s", host, port)
-		http.Redirect(w, r, u, http.StatusMovedPermanently)
+		r.URL.Scheme = "https"
+		r.URL.Host = net.JoinHostPort(host, port)
+		http.Redirect(w, r, r.URL.String(), http.StatusTemporaryRedirect)
 	})
 }
 
