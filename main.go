@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"flag"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -15,6 +16,7 @@ import (
 
 var (
 	index     string
+	html      []byte
 	folder    string
 	endpoints []string
 	httpAddr  string
@@ -48,6 +50,11 @@ func init() {
 }
 
 func main() {
+	var err error
+	html, err = ioutil.ReadFile(index)
+	if err != nil {
+		log.Fatal(err)
+	}
 	cfg := client.Config{
 		Endpoints:               endpoints,
 		Transport:               client.DefaultTransport,

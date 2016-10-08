@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -39,11 +38,7 @@ func handler() http.Handler {
 			}
 		}()
 		if r.URL.RequestURI() == "/" && r.Method == http.MethodGet {
-			buf, err := ioutil.ReadFile(index)
-			if err != nil {
-				panic(err)
-			}
-			w.Write(buf)
+			w.Write(html)
 			return
 		}
 		switch r.Method {

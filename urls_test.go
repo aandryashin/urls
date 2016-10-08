@@ -70,15 +70,6 @@ func TestIndex(t *testing.T) {
 	AssertThat(t, resp, Code{http.StatusOK})
 }
 
-func TestBrokenIndex(t *testing.T) {
-	save := index
-	index = "unexistent"
-	resp, err := http.Get(uri("/"))
-	AssertThat(t, err, Is{nil})
-	AssertThat(t, resp, Code{http.StatusInternalServerError})
-	index = save
-}
-
 func TestWrongMethod(t *testing.T) {
 	req, _ := http.NewRequest(http.MethodPut, uri("/"), nil)
 	resp, err := http.DefaultClient.Do(req)
